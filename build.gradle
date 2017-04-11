@@ -30,6 +30,16 @@ sourceSets {
                 project.configurations.testRuntime
     }
 }
+jar {
+    from {
+        (configurations.runtime).collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    manifest {
+        attributes("Main-Class": "com.slack.memcached.server.MemcacheServer" )
+    }
+}
 
 test {
     testLogging.showStandardStreams = true
