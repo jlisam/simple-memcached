@@ -1,0 +1,60 @@
+group 'com.slack'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'io.netty', name: 'netty-all', version: '4.1.9.Final'
+    compile group: 'commons-cli', name: 'commons-cli', version: '1.3.1'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+sourceSets {
+    testIntegration {
+        java.srcDir file('src/test-integration/java')
+        resources.srcDir file('src/test-integration/resources')
+        compileClasspath = project.sourceSets.main.output +
+                project.sourceSets.test.output +
+                project.configurations.testCompile
+        runtimeClasspath = output +
+                project.sourceSets.main.output +
+                project.sourceSets.test.output +
+                project.configurations.testRuntime
+    }
+}
+
+test {
+    testLogging.showStandardStreams = true
+
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+    }
+
+    onOutput { descriptor, event ->
+        logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
+    }
+}
+
+task testIntegration(type: Test) {
+    testClassesDir = project.sourceSets.testIntegration.output.classesDir
+    classpath = project.sourceSets.testIntegration.runtimeClasspath
+    testLogging.showStandardStreams = true
+
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+    }
+
+    onOutput { descriptor, event ->
+        logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
+    }
+}
+
+defaultTasks 'clean', 'build', 'test', 'testIntegration'
