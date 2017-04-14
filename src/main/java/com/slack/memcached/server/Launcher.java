@@ -30,10 +30,25 @@ public class Launcher {
     private final static int MAX_WORKER_THREADS = 12;
     private final static int BOSS_THREADS = 2;
     private String[] args;
+    private ChannelFuture channelFuture;
+    private EventLoopGroup workerGroup;
+    private EventLoopGroup bossGroup;
 
     public void run(String[] args) throws Exception {
         this.args = args;
         runServer();
+    }
+
+    public void stop() throws InterruptedException {
+
+        // Wait until the server socket is closed.
+        // In this example, this does not happen, but you can do that to gracefully
+        // shut down your server.
+        if (channelFuture != null) {
+            channelFuture.channel().closeFuture().sync();
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+        }
     }
 
     private Options createOptions() {
@@ -90,7 +105,7 @@ public class Launcher {
 
         } catch (ParseException e) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp( "memcached", options );
+            formatter.printHelp("memcached", options);
             System.exit(2);
         }
     }
@@ -105,37 +120,28 @@ public class Launcher {
         }
     }
 
-
     private void run(int port, int bossThreads, int workerThreads, int maxEntries, int concurrencyLevel) throws Exception {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(bossThreads);
-        EventLoopGroup workerGroup = new NioEventLoopGroup(workerThreads);
+        bossGroup = new NioEventLoopGroup(bossThreads);
+        workerGroup = new NioEventLoopGroup(workerThreads);
         TextServerHandler textServerHandler = new TextServerHandler(new LRUMemCache<>(maxEntries, concurrencyLevel));
-        try {
-            ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline()
-                                    .addLast(new CommandDecoder())
-                                    .addLast(textServerHandler);
-                        }
-                    })
-                    .option(ChannelOption.SO_BACKLOG, 128)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-            // Bind and start to accept incoming connections.
-            ChannelFuture f = b.bind(port).sync();
+        ServerBootstrap b = new ServerBootstrap();
+        b.group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline()
+                                .addLast(new CommandDecoder())
+                                .addLast(textServerHandler);
+                    }
+                })
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-            // Wait until the server socket is closed.
-            // In this example, this does not happen, but you can do that to gracefully
-            // shut down your server.
-            f.channel().closeFuture().sync();
-        } finally {
-            workerGroup.shutdownGracefully();
-            bossGroup.shutdownGracefully();
-        }
+        // Bind and start to accept incoming connections.
+        channelFuture = b.bind(port).sync();
+
     }
 
 

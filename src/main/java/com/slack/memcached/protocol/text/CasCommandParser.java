@@ -39,9 +39,6 @@ public class CasCommandParser implements CommandParser {
             ByteBuf payloadSize = remainingCommandLine.readSlice(bytesToReadBeforeSPACE);
 
             bytesToReadBeforeSPACE = remainingCommandLine.bytesBefore((byte) ' ');
-            if (bytesToReadBeforeSPACE >= 0) {
-
-            }
             int bytesToReadBeforeCROrSPACE = Math.max(bytesToReadBeforeSPACE, remainingCommandLine.readableBytes());
             ByteBuf cas = remainingCommandLine.readSlice(bytesToReadBeforeCROrSPACE);
 

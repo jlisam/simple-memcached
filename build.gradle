@@ -14,6 +14,7 @@ dependencies {
     compile group: 'commons-cli', name: 'commons-cli', version: '1.3.1'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    testCompile group: 'net.spy', name: 'spymemcached', version: '2.12.2'
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 
@@ -57,14 +58,6 @@ task testIntegration(type: Test) {
     testClassesDir = project.sourceSets.testIntegration.output.classesDir
     classpath = project.sourceSets.testIntegration.runtimeClasspath
     testLogging.showStandardStreams = true
-
-    beforeTest { descriptor ->
-        logger.lifecycle("Running test: " + descriptor)
-    }
-
-    onOutput { descriptor, event ->
-        logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
-    }
 }
 
 defaultTasks 'clean', 'build', 'test', 'testIntegration'

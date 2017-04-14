@@ -19,7 +19,11 @@ class AvailableCommands {
     }
 
     public Optional<Command> tryParse(ByteBuf command, ByteBuf buffer) {
-        return Optional.ofNullable(commands.getOrDefault(command, new DummyCommandParser())
-                .parse(buffer));
+        try{
+            return Optional.ofNullable(commands.getOrDefault(command, new DummyCommandParser())
+                    .parse(buffer));
+        } finally {
+            command.release();
+        }
     }
 }
