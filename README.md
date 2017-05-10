@@ -1,4 +1,4 @@
-# Slack Technical Exercise (Memcache Server)
+# Simple Memcache Server
 
 ### Design
 Cache : Array of LinkedHashMaps with synchronized methods at each Map's methods.
